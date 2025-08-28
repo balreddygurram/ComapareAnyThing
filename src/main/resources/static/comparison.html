@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Comparison Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .comparison-form {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .compare-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+
+        .compare-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .compare-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .results-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+
+        .item-column {
+            padding: 20px;
+        }
+
+        .item-column:first-child {
+            border-right: 2px solid #f0f0f0;
+        }
+
+        .item-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #667eea;
+            text-align: center;
+        }
+
+        .feature-section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .feature-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .feature-list li:before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .cons-list li:before {
+            content: "✗ ";
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .recommendation {
+            grid-column: 1 / -1;
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .recommendation h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .price-comparison {
+            grid-column: 1 / -1;
+            padding: 15px;
+            background: #e8f4fd;
+            text-align: center;
+            font-weight: 600;
+            color: #0066cc;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .item-column:first-child {
+                border-right: none;
+                border-bottom: 2px solid #f0f0f0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 AI Comparison Tool</h1>
+            <p>Compare anything using ChatGPT - products, concepts, ideas, and more!</p>
+        </div>
+
+        <div class="comparison-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="itemA">First Item:</label>
+                    <input type="text" id="itemA" placeholder="e.g., iPhone 15, Tesla Model 3, Python">
+                </div>
+                <div class="form-group">
+                    <label for="itemB">Second Item:</label>
+                    <input type="text" id="itemB" placeholder="e.g., Samsung Galaxy S23, BMW i4, JavaScript">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Category (optional):</label>
+                <select id="category">
+                    <option value="">General Comparison</option>
+                    <option value="smartphones">Smartphones</option>
+                    <option value="cars">Cars</option>
+                    <option value="laptops">Laptops</option>
+                    <option value="programming languages">Programming Languages</option>
+                    <option value="software tools">Software Tools</option>
+                    <option value="food">Food</option>
+                    <option value="travel destinations">Travel Destinations</option>
+                    <option value="books">Books</option>
+                    <option value="movies">Movies</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+
+            <button class="compare-btn" onclick="compareItems()">
+                🚀 Compare Now
+            </button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>AI is analyzing and comparing your items...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="results" class="results" style="display: none;">
+            <div class="results-header">
+                <h2 id="comparisonTitle">Comparison Results</h2>
+            </div>
+            
+            <div id="priceComparison" class="price-comparison" style="display: none;"></div>
+            
+            <div class="comparison-grid">
+                <div class="item-column">
+                    <div class="item-title" id="itemATitle"></div>
+                    
+                    <div class="feature-section">
+                        <div class="section-title">Key Features</div>
+                        <ul class="feature-list" id="itemAFeatures"></ul>
+                    </div>
+                    
+                    <div class="feature-section">
+                        <div class="section-title">Pros</div>
+                        <ul class="feature-list" id="itemAPros"></ul>
+                    </div>
+                    
+                    <div class="feature-section">
+                        <div class="section-title">Cons</div>
+                        <ul class="feature-list cons-list" id="itemACons"></ul>
+                    </div>
+                </div>
+
+                <div class="item-column">
+                    <div class="item-title" id="itemBTitle"></div>
+                    
+                    <div class="feature-section">
+                        <div class="section-title">Key Features</div>
+                        <ul class="feature-list" id="itemBFeatures"></ul>
+                    </div>
+                    
+                    <div class="feature-section">
+                        <div class="section-title">Pros</div>
+                        <ul class="feature-list" id="itemBPros"></ul>
+                    </div>
+                    
+                    <div class="feature-section">
+                        <div class="section-title">Cons</div>
+                        <ul class="feature-list cons-list" id="itemBCons"></ul>
+                    </div>
+                </div>
+                
+                <div class="recommendation">
+                    <h3>🎯 Recommendation</h3>
+                    <p id="recommendationText"></p>
+                    
+                    <h4 style="margin-top: 15px;">Summary</h4>
+                    <p id="summaryText"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function compareItems() {
+            const itemA = document.getElementById('itemA').value.trim();
+            const itemB = document.getElementById('itemB').value.trim();
+            const category = document.getElementById('category').value;
+
+            if (!itemA || !itemB) {
+                showError('Please enter both items to compare');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+            hideResults();
+
+            try {
+                const response = await fetch('/api/compare', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        itemA: itemA,
+                        itemB: itemB,
+                        category: category || null
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to get comparison results');
+                }
+
+                const result = await response.json();
+                displayResults(result);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Sorry, there was an error processing your comparison. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayResults(result) {
+            document.getElementById('comparisonTitle').textContent = 
+                `${result.itemA} vs ${result.itemB}`;
+            
+            document.getElementById('itemATitle').textContent = result.itemA;
+            document.getElementById('itemBTitle').textContent = result.itemB;
+
+            displayList('itemAFeatures', result.itemAFeatures);
+            displayList('itemBFeatures', result.itemBFeatures);
+            displayList('itemAPros', result.itemAPros);
+            displayList('itemBPros', result.itemBPros);
+            displayList('itemACons', result.itemAConsuments);
+            displayList('itemBCons', result.itemBCons);
+
+            if (result.priceComparison && result.priceComparison !== 'Price comparison unavailable') {
+                document.getElementById('priceComparison').textContent = result.priceComparison;
+                document.getElementById('priceComparison').style.display = 'block';
+            } else {
+                document.getElementById('priceComparison').style.display = 'none';
+            }
+
+            document.getElementById('recommendationText').textContent = 
+                result.recommendation || 'No specific recommendation available.';
+            
+            document.getElementById('summaryText').textContent = 
+                result.summary || 'Comparison completed successfully.';
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function displayList(elementId, items) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = '';
+            
+            if (items && items.length > 0) {
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    element.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'No information available';
+                li.style.color = '#999';
+                element.appendChild(li);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.querySelector('.compare-btn').disabled = show;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+        }
+
+        // Handle Enter key in input fields
+        document.getElementById('itemA').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') compareItems();
+        });
+
+        document.getElementById('itemB').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') compareItems();
+        });
+    </script>
+</body>
+</html>
